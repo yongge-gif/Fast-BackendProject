@@ -1,0 +1,22 @@
+# python
+__pycache__/
+*.pyc
+
+# venv
+venv/
+.env/
+
+# idea
+.idea/
+
+# logs
+logs/
+
+# uploads
+uploads/
+
+# alembic cache
+*.sqlite3
+
+# system
+.DS_Store
