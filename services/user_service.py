@@ -39,8 +39,20 @@ def register_service(data, db):
     return True
 
 
-def get_all_users_service(db):
+def get_all_users_service(page, size, db):
 
-    users = db.query(User).all()
+    offset = (page - 1)* size  # 跳过多少条数据
 
-    return users
+    total = db.query(User).count()
+
+    users = db.query(User)\
+        .offset(offset)\
+        .limit(size)\
+        .all()
+
+    return {
+        "total": total,
+        "page": page,
+        "size": size,
+        "users": users
+    }

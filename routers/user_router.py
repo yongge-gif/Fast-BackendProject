@@ -1,13 +1,11 @@
 import uuid
-from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from schemas.user_schema import UserResponse, LoginRequest, RegisterRequest, MessageResponse
+from schemas.user_schema import LoginRequest, RegisterRequest, MessageResponse, UserListResponse
 from services.user_service import login_service, register_service, get_all_users_service
-from utils.auth import get_current_user
 from utils.jwt_util import create_token
 from utils.logger import logger
 
@@ -57,12 +55,13 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/users", response_model=List[UserResponse])  # 查询所有用户
+@router.get("/users", response_model=UserListResponse)  # 查询所有用户
 def get_all_users(
-        user = Depends(get_current_user),
+        page: int = 1,
+        size: int = Query(5, le=50),  # 不传参默认5条, 最大50条
         db: Session = Depends(get_db)
 ):
-    users = get_all_users_service(db)
+    users = get_all_users_service(page, size, db)
 
     return users
 

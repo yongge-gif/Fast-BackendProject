@@ -25,6 +25,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# app = FastAPI()
+
 app.include_router(router)  # 把其它文件里的路由“注册”到主程序中。
 
 User.metadata.create_all(bind=engine)  # 自动创建表
