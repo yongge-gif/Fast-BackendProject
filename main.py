@@ -6,8 +6,24 @@ from models.user_model import User
 from fastapi.responses import JSONResponse
 from utils.logger import logger
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager  # 导入“异步上下文管理器”装饰器
 
-app = FastAPI()
+
+# 创建生命周期管理
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    # 启动逻辑
+    logger.info("数据库连接成功")
+    logger.info("日志初始化成功")
+
+    yield  # 上下文管理
+
+    # 关闭逻辑
+    logger.info("项目安全关闭")
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router)  # 把其它文件里的路由“注册”到主程序中。
 
@@ -44,7 +60,6 @@ async def global_exception_handler(
         request: Request,
         exc: Exception
 ):
-
     logger.error(f"系统异常: {exc}")
 
     return JSONResponse(
@@ -61,4 +76,3 @@ app.mount(
     StaticFiles(directory="uploads"),  # 表示：本地真实目录：项目目录/uploads
     name="uploads"
 )
-

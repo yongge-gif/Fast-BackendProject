@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 
 
 # 请求模型
@@ -23,8 +23,12 @@ class UserResponse(BaseModel):
     id: int
     username: str
 
-    class Config:
-        orm_mode = True  # 读取ORM属性
+    # class Config:
+    #     orm_mode = True  # 读取ORM属性    Pydantic V1
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 
