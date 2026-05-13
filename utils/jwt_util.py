@@ -1,9 +1,6 @@
 from jose import jwt
 from datetime import datetime, timedelta
-
-SECRET_KEY = "123456"
-
-ALGORITHM = "HS256"
+from config.settings import SECRET_KEY, ALGORITHM
 
 
 def create_token(data: dict):

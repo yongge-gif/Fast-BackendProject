@@ -20,3 +20,5 @@ uploads/
 
 # system
 .DS_Store
+
+.env
