@@ -2,12 +2,13 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
-
+from utils.auth import get_current_user
 from database import get_db
 from schemas.user_schema import LoginRequest, RegisterRequest, MessageResponse, UserListResponse
 from services.user_service import login_service, register_service, get_all_users_service
 from utils.jwt_util import create_token
 from utils.logger import logger
+from typing import Optional
 
 router = APIRouter()
 
@@ -59,16 +60,29 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 def get_all_users(
         page: int = 1,
         size: int = Query(5, le=50),  # 不传参默认5条, 最大50条
+        username: Optional[str] = Query(
+            None,
+            min_length=1,
+            max_length=15
+        ),  # Optional[str]表示可以为str或空
+
+        email: Optional[str] = Query(
+            None,
+            max_length=30
+        ),
+
+        # 登录验证
+        _user=Depends(get_current_user),  # _user 表示故意不用它”
+
         db: Session = Depends(get_db)
 ):
-    users = get_all_users_service(page, size, db)
+    users = get_all_users_service(page, size, username, email, db)
 
     return users
 
 
 @router.get("/error")
 def test_error():
-
     1 / 0
 
 

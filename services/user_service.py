@@ -39,15 +39,28 @@ def register_service(data, db):
     return True
 
 
-def get_all_users_service(page, size, db):
+def get_all_users_service(page, size, username, email, db):
 
     offset = (page - 1)* size  # 跳过多少条数据
 
-    total = db.query(User).count()
+    query = db.query(User)  # ***“可继续加工”的动态拼接***
 
-    users = db.query(User)\
-        .offset(offset)\
-        .limit(size)\
+    # 用户名过滤
+    if username:
+        query = query.filter(
+            User.username.like(f"%{username}%")
+        )
+
+    # 邮箱过滤
+    if email:
+        query = query.filter(
+            User.email.like(f"%{email}%")
+        )
+
+    total = query.count()
+
+    users = query.offset(offset) \
+        .limit(size) \
         .all()
 
     return {
