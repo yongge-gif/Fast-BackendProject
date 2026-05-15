@@ -13,23 +13,23 @@ def login_service(data, db):
     return user
 
 
-def register_service(data, db):
+def register_service(username, password, email, avatar, db):
 
     # 先查询用户是否存在
     user = db.query(User).filter(
-        User.username == data.username
+        User.username == username
     ).first()
 
     # 用户已存在
     if user:
         return False
 
-
-
     # ORM插入数据（注册）
     new_user = User(
-        username=data.username,
-        password=data.password
+        username=username,
+        password=password,
+        email=email,
+        avatar=avatar
     )
 
     db.add(new_user)

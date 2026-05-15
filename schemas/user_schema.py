@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List
+from typing import List, Optional
 
 
 # 请求模型
@@ -17,7 +17,9 @@ class RegisterRequest(BaseModel):
 # 响应模型
 
 class MessageResponse(BaseModel):
+    code: int
     msg: str
+    data: Optional[dict] = None
 
 
 class UserResponse(BaseModel):

@@ -1,10 +1,10 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
 from sqlalchemy.orm import Session
 from utils.auth import get_current_user
 from database import get_db
-from schemas.user_schema import LoginRequest, RegisterRequest, MessageResponse, UserListResponse
+from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse
 from services.user_service import login_service, register_service, get_all_users_service
 from utils.jwt_util import create_token
 from utils.logger import logger
@@ -14,8 +14,32 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=MessageResponse)  # 注册接口
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    result = register_service(data, db)
+async def register(
+    username: str = Form(...),
+    password: str = Form(...),
+    email: str = Form(...),
+    avatar: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+
+    # 生成唯一文件名
+    suffix = avatar.filename.split(".")[-1]
+
+    # 上传类型限制
+    if not avatar.content_type.startswith("image/"):  # 上传限制
+        return {"msg": "只能上传图片"}
+
+    filename = f"{uuid.uuid4()}.{suffix}"
+
+    file_path = f"uploads/{filename}"
+
+    # 保存头像
+    with open(file_path, "wb") as f:
+        content = await avatar.read()
+
+        f.write(content)
+
+    result = register_service(username, password, email, filename, db)
 
     if not result:
         raise HTTPException(
@@ -25,7 +49,10 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
     return {
         "code": 200,
-        "msg": "注册成功"
+        "msg": "注册成功",
+        "data": {
+            "avatar_url": f"http://127.0.0.1:8000/uploads/{filename}"  # 返回头像访问地址
+        }
     }
 
 
