@@ -63,6 +63,8 @@ def get_all_users_service(page, size, username, email, order_by, sort, db):
         "id",
         "username",
         "email"
+        "create_time",
+        "update_time"
     ]
 
     if order_by not in allowed_fields:

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
+from datetime import datetime
 
 
 # 请求模型
@@ -25,6 +26,11 @@ class MessageResponse(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    email: str | None
+    avatar: str | None
+
+    create_time: datetime | None
+    update_time: datetime | None
 
     # class Config:
     #     orm_mode = True  # 读取ORM属性    Pydantic V1
