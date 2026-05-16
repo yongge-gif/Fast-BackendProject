@@ -43,7 +43,7 @@ class UserListResponse(BaseModel):
 
     size: int
 
-    users: List[UserResponse]
+    data: List[UserResponse]
 
     model_config = ConfigDict(
         from_attributes=True

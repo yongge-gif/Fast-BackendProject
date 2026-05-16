@@ -39,7 +39,7 @@ def register_service(username, password, email, avatar, db):
     return True
 
 
-def get_all_users_service(page, size, username, email, db):
+def get_all_users_service(page, size, username, email, order_by, sort, db):
 
     offset = (page - 1)* size  # 跳过多少条数据
 
@@ -57,6 +57,31 @@ def get_all_users_service(page, size, username, email, db):
             User.email.like(f"%{email}%")
         )
 
+    # 排序
+    # 白名单校验
+    allowed_fields = [
+        "id",
+        "username",
+        "email"
+    ]
+
+    if order_by not in allowed_fields:
+        order_by = "id"
+
+    order_column = getattr(User, order_by)  # 根据前端传来的字段动态排序
+
+    if sort == "desc":
+
+        query = query.order_by(
+            order_column.desc()
+        )
+
+    else:
+
+        query = query.order_by(
+            order_column.asc()
+        )
+
     total = query.count()
 
     users = query.offset(offset) \
@@ -67,5 +92,5 @@ def get_all_users_service(page, size, username, email, db):
         "total": total,
         "page": page,
         "size": size,
-        "users": users
+        "data": users
     }

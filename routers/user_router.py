@@ -85,8 +85,9 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/users", response_model=UserListResponse)  # 查询所有用户
 def get_all_users(
-        page: int = 1,
+        page: int = Query(1, ge=1),  # 大于等于1
         size: int = Query(5, le=50),  # 不传参默认5条, 最大50条
+
         username: Optional[str] = Query(
             None,
             min_length=1,
@@ -98,12 +99,16 @@ def get_all_users(
             max_length=30
         ),
 
+        order_by: str = "id",
+
+        sort: str = "desc",
+
         # 登录验证
         _user=Depends(get_current_user),  # _user 表示故意不用它”
 
         db: Session = Depends(get_db)
 ):
-    users = get_all_users_service(page, size, username, email, db)
+    users = get_all_users_service(page, size, username, email, order_by, sort, db)
 
     return users
 
