@@ -96,3 +96,37 @@ def get_all_users_service(page, size, username, email, order_by, sort, db):
         "size": size,
         "data": users
     }
+
+
+def update_user_service(user_id, data, db):
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    # 用户不存在
+    if not user:
+        return None
+
+    # 用户名重复校验
+    exists_user = db.query(User).filter(
+        User.username == data.username,
+        User.id != user_id
+    ).first()
+
+    if exists_user:
+        return "USERNAME_EXISTS"
+
+    # 修改用户名
+    if data.username:
+
+        user.username = data.username
+
+    # 修改邮箱
+    if data.email:
+
+        user.email = data.email
+
+    db.commit()
+
+    return True

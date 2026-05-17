@@ -1,11 +1,12 @@
 import uuid
+from unittest import result
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
 from sqlalchemy.orm import Session
 from utils.auth import get_current_user
 from database import get_db
-from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse
-from services.user_service import login_service, register_service, get_all_users_service
+from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest
+from services.user_service import login_service, register_service, get_all_users_service, update_user_service
 from utils.jwt_util import create_token
 from utils.logger import logger
 from typing import Optional
@@ -118,7 +119,7 @@ def test_error():
     1 / 0
 
 
-@router.post("/upload")
+@router.post("/upload")  # 上传文件
 async def upload_file(file: UploadFile = File(...)):  # 上传文件对象
 
     suffix = file.filename.split(".")[-1]  # 获取文件后缀名
@@ -140,4 +141,36 @@ async def upload_file(file: UploadFile = File(...)):  # 上传文件对象
         "msg": "上传成功",
         "filename": filename,
         "url": f"http://127.0.0.1:8000/uploads/{filename}"  # 返回文件访问地址
+    }
+
+
+# 更新接口
+@router.put("/users/{user_id}")
+def update_user(
+    user_id: int,
+    data: UpdateUserRequest,
+    db: Session = Depends(get_db)
+):
+
+    result = update_user_service(
+        user_id,
+        data,
+        db
+    )
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="用户不存在, 修改失败"
+        )
+
+    if result == "USERNAME_EXISTS":
+        raise HTTPException(
+            status_code=400,
+            detail="用户名已存在, 修改失败"
+        )
+
+    return {
+        "code": 200,
+        "mag": "修改成功"
     }

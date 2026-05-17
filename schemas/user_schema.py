@@ -15,6 +15,12 @@ class RegisterRequest(BaseModel):
     password: str
 
 
+class UpdateUserRequest(BaseModel):
+    # 允许部分字段修改
+    username: Optional[str] = None
+    email: Optional[str] = None
+
+
 # 响应模型
 
 class MessageResponse(BaseModel):
