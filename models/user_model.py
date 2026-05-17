@@ -1,8 +1,7 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Boolean
 from database import Base
 from sqlalchemy import DateTime
 from datetime import datetime
-
 
 
 class User(Base):
@@ -24,4 +23,11 @@ class User(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow  # 更新时自动刷新时间。
+    )
+
+    # 软删除字段
+    is_deleted = Column(
+        Boolean,
+        default=False,  # False: 未删除
+        nullable=False  # 不许出现Null
     )

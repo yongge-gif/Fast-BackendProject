@@ -1,12 +1,11 @@
 import uuid
-from unittest import result
-
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
 from sqlalchemy.orm import Session
 from utils.auth import get_current_user
 from database import get_db
 from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest
-from services.user_service import login_service, register_service, get_all_users_service, update_user_service
+from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
+                                   delete_user_service)
 from utils.jwt_util import create_token
 from utils.logger import logger
 from typing import Optional
@@ -16,13 +15,12 @@ router = APIRouter()
 
 @router.post("/register", response_model=MessageResponse)  # 注册接口
 async def register(
-    username: str = Form(...),
-    password: str = Form(...),
-    email: str = Form(...),
-    avatar: UploadFile = File(...),
-    db: Session = Depends(get_db)
+        username: str = Form(...),
+        password: str = Form(...),
+        email: str = Form(...),
+        avatar: UploadFile = File(...),
+        db: Session = Depends(get_db)
 ):
-
     # 生成唯一文件名
     suffix = avatar.filename.split(".")[-1]
 
@@ -147,11 +145,10 @@ async def upload_file(file: UploadFile = File(...)):  # 上传文件对象
 # 更新接口
 @router.put("/users/{user_id}")
 def update_user(
-    user_id: int,
-    data: UpdateUserRequest,
-    db: Session = Depends(get_db)
+        user_id: int,
+        data: UpdateUserRequest,
+        db: Session = Depends(get_db)
 ):
-
     result = update_user_service(
         user_id,
         data,
@@ -172,5 +169,28 @@ def update_user(
 
     return {
         "code": 200,
-        "mag": "修改成功"
+        "msg": "修改成功"
+    }
+
+
+# 删除接口
+@router.delete("/users/{user_id}")
+def delete_user(
+        user_id: int,
+        db: Session = Depends(get_db)
+):
+    result = delete_user_service(
+        user_id,
+        db
+    )
+
+    if result == False:
+        raise HTTPException(
+            status_code=404,
+            detail="用户不存在, 删除失败"
+        )
+
+    return {
+        "code": 200,
+        "msg": "删除成功"
     }

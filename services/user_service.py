@@ -2,19 +2,18 @@ from models.user_model import User
 
 
 def login_service(data, db):
-
     # 使用ORM查询
     user = db.query(User).filter(
         # 条件过滤
         User.username == data.username,
-        User.password == data.password
+        User.password == data.password,
+        User.is_deleted == False
     ).first()
 
     return user
 
 
 def register_service(username, password, email, avatar, db):
-
     # 先查询用户是否存在
     user = db.query(User).filter(
         User.username == username
@@ -40,10 +39,12 @@ def register_service(username, password, email, avatar, db):
 
 
 def get_all_users_service(page, size, username, email, order_by, sort, db):
+    offset = (page - 1) * size  # 跳过多少条数据
 
-    offset = (page - 1)* size  # 跳过多少条数据
-
-    query = db.query(User)  # ***“可继续加工”的动态拼接***
+    # ***“可继续加工”的动态拼接***
+    query = db.query(User).filter(
+        User.is_deleted == False  # 查询时过滤已软删除的数据
+    )
 
     # 用户名过滤
     if username:
@@ -99,7 +100,6 @@ def get_all_users_service(page, size, username, email, order_by, sort, db):
 
 
 def update_user_service(user_id, data, db):
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -119,13 +119,34 @@ def update_user_service(user_id, data, db):
 
     # 修改用户名
     if data.username:
-
         user.username = data.username
 
     # 修改邮箱
     if data.email:
-
         user.email = data.email
+
+    db.commit()
+
+    return True
+
+
+def delete_user_service(
+        user_id,
+        db
+):
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.is_deleted == False
+    ).first()
+
+    if not user:
+        return False
+
+
+    # db.delete(user)  # 真删除
+    user.is_deleted = True  # 软删除
+
+    db.commit()
 
     db.commit()
 
