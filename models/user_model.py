@@ -31,3 +31,9 @@ class User(Base):
         default=False,  # False: 未删除
         nullable=False  # 不许出现Null
     )
+
+    # 权限字段
+    role = Column(
+        String(20),
+        default="user"
+    )

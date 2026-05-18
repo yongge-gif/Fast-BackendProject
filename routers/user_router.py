@@ -11,6 +11,7 @@ from utils.logger import logger
 from typing import Optional
 from utils.response import (success_response, error_response)
 from fastapi.responses import JSONResponse
+from dependencies.permission import admin_required
 
 router = APIRouter()
 
@@ -20,25 +21,28 @@ async def register(
         username: str = Form(...),
         password: str = Form(...),
         email: str = Form(...),
-        avatar: UploadFile = File(...),
+        avatar: Optional[UploadFile] = File(None),  # 可以不上传，使用默认头像
         db: Session = Depends(get_db)
 ):
-    # 生成唯一文件名
-    suffix = avatar.filename.split(".")[-1]
+    filename = "default.png"
 
-    # 上传类型限制
-    if not avatar.content_type.startswith("image/"):  # 上传限制
-        return {"msg": "只能上传图片"}
+    if avatar:
+        # 生成唯一文件名
+        suffix = avatar.filename.split(".")[-1]
 
-    filename = f"{uuid.uuid4()}.{suffix}"
+        # 上传类型限制
+        if not avatar.content_type.startswith("image/"):  # 上传限制
+            return {"msg": "只能上传图片"}
 
-    file_path = f"uploads/{filename}"
+        filename = f"{uuid.uuid4()}.{suffix}"
 
-    # 保存头像
-    with open(file_path, "wb") as f:
-        content = await avatar.read()
+        file_path = f"uploads/{filename}"
 
-        f.write(content)
+        # 保存头像
+        with open(file_path, "wb") as f:
+            content = await avatar.read()
+
+            f.write(content)
 
     result = register_service(username, password, email, filename, db)
 
@@ -76,6 +80,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_token({
         "username": user.username,
+        "role": user.role  # 携带权限
     })
 
     logger.info(f"用户 {data.username} 登录成功")
@@ -185,7 +190,9 @@ def update_user(
 @router.delete("/users/{user_id}")
 def delete_user(
         user_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        _current_user=Depends(admin_required)  # 权限依赖链: DELETE接口 → admin_required → get_current_user → JWT认证
+        # 不用current_user变量
 ):
     result = delete_user_service(
         user_id,

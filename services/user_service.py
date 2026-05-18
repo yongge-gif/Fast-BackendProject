@@ -28,7 +28,8 @@ def register_service(username, password, email, avatar, db):
         username=username,
         password=password,
         email=email,
-        avatar=avatar
+        avatar=avatar,
+        role="user"
     )
 
     db.add(new_user)
