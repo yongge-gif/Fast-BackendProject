@@ -7,12 +7,14 @@ from fastapi.responses import JSONResponse
 from utils.logger import logger
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager  # 导入“异步上下文管理器”装饰器
+from fastapi.exceptions import RequestValidationError  # FastAPI 的“请求参数校验异常”类
+from starlette.exceptions import HTTPException
+from utils.response import error_response
 
 
 # 创建生命周期管理
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     # 启动逻辑
     logger.info("数据库连接成功")
     logger.info("日志初始化成功")
@@ -55,6 +57,23 @@ async def db_session_middleware(
     print("=" * 50)
 
     return response
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+        request: Request,
+        exc: HTTPException
+):
+    logger.error(f"HTTP异常: {exc.detail}")
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.status_code,
+            "msg": exc.detail,
+            "data": None
+        }
+    )
 
 
 @app.exception_handler(Exception)

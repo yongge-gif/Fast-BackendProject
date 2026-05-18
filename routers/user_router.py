@@ -9,6 +9,8 @@ from services.user_service import (login_service, register_service, get_all_user
 from utils.jwt_util import create_token
 from utils.logger import logger
 from typing import Optional
+from utils.response import (success_response, error_response)
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -64,9 +66,12 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         logger.warning(f"用户 {data.username} 登录失败")
 
-        raise HTTPException(
+        return JSONResponse(
             status_code=401,
-            detail="账号或密码错误"
+            content=error_response(
+                msg="账号或密码错误",
+                code=401
+            )
         )
 
     token = create_token({
@@ -75,11 +80,12 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     logger.info(f"用户 {data.username} 登录成功")
 
-    return {
-        "code": 200,
-        "msg": "登录成功",
-        "data": {"token": token}
-    }
+    return success_response(
+        msg="登录成功",
+        data={
+            "token": token
+        }
+    )
 
 
 @router.get("/users", response_model=UserListResponse)  # 查询所有用户
@@ -109,7 +115,9 @@ def get_all_users(
 ):
     users = get_all_users_service(page, size, username, email, order_by, sort, db)
 
-    return users
+    return success_response(
+        data=users
+    )
 
 
 @router.get("/error")
