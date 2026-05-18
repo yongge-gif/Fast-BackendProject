@@ -1,4 +1,5 @@
 from models.user_model import User
+from utils.password import hash_password
 
 
 def login_service(data, db):
@@ -6,7 +7,7 @@ def login_service(data, db):
     user = db.query(User).filter(
         # 条件过滤
         User.username == data.username,
-        User.password == data.password,
+        # User.password == data.password,  # 去接口中验证密码
         User.is_deleted == False
     ).first()
 
@@ -26,7 +27,7 @@ def register_service(username, password, email, avatar, db):
     # ORM插入数据（注册）
     new_user = User(
         username=username,
-        password=password,
+        password=hash_password(password),
         email=email,
         avatar=avatar,
         role="user"
@@ -142,7 +143,6 @@ def delete_user_service(
 
     if not user:
         return False
-
 
     # db.delete(user)  # 真删除
     user.is_deleted = True  # 软删除

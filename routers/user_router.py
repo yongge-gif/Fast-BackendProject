@@ -12,6 +12,7 @@ from typing import Optional
 from utils.response import (success_response, error_response)
 from fastapi.responses import JSONResponse
 from dependencies.permission import admin_required
+from utils.password import verify_password
 
 router = APIRouter()
 
@@ -32,7 +33,9 @@ async def register(
 
         # 上传类型限制
         if not avatar.content_type.startswith("image/"):  # 上传限制
-            return {"msg": "只能上传图片"}
+            return error_response(
+                msg="只能上传图片"
+            )
 
         filename = f"{uuid.uuid4()}.{suffix}"
 
@@ -68,7 +71,21 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = login_service(data, db)
 
     if not user:
-        logger.warning(f"用户 {data.username} 登录失败")
+        logger.warning(f"用户 {data.username} 不存在")
+
+        return JSONResponse(
+            status_code=401,
+            content=error_response(
+                msg="账号或密码错误",
+                code=401
+            )
+        )
+
+    if not verify_password(
+        data.password,
+        user.password
+    ):
+        logger.warning(f"用户{data.username} 密码验证失败")
 
         return JSONResponse(
             status_code=401,

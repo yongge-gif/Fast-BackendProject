@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict,Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -6,13 +6,27 @@ from datetime import datetime
 # 请求模型
 
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(
+        ...,
+        # min_length=3,
+        max_length=20,)
+    password: str = Field(
+        ...,
+        # min_length=6,
+        max_length=32
+    )
 
 
 class RegisterRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(
+        ...,
+        # min_length=3,
+        max_length=20, )
+    password: str = Field(
+        ...,
+        # min_length=6,
+        max_length=32
+    )
 
 
 class UpdateUserRequest(BaseModel):
