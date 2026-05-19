@@ -30,7 +30,8 @@ def register_service(username, password, email, avatar, db):
         password=hash_password(password),
         email=email,
         avatar=avatar,
-        role="user"
+        role="user",
+        status=1
     )
 
     db.add(new_user)
@@ -148,6 +149,27 @@ def delete_user_service(
     user.is_deleted = True  # 软删除
 
     db.commit()
+
+    db.commit()
+
+    return True
+
+
+def update_user_status_service(
+    user_id,
+    status,
+    db
+):
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+
+        return False
+
+    user.status = status
 
     db.commit()
 

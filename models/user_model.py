@@ -37,3 +37,9 @@ class User(Base):
         String(20),
         default="user"
     )
+
+    # 状态字段
+    status = Column(
+        Integer,
+        default=1  # 正常用户
+    )

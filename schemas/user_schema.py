@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict,Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -56,6 +56,8 @@ class UserResponse(BaseModel):
 
     create_time: datetime | None
     update_time: datetime | None
+
+    status: int | None
 
     # class Config:
     #     orm_mode = True  # 读取ORM属性    Pydantic V1

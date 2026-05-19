@@ -6,7 +6,7 @@ from utils.auth import get_current_user
 from database import get_db
 from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest, RefreshTokenRequest
 from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
-                                   delete_user_service)
+                                   delete_user_service, update_user_status_service)
 from utils.jwt_util import create_access_token, create_refresh_token, decode_token
 from utils.logger import logger
 from typing import Optional
@@ -81,6 +81,16 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
                 code=401
             )
         )
+
+    # 状态校验
+    if user.status == 0:
+        logger.warning(f"用户{data.username}已被封禁")
+
+        return error_response(
+            msg="账号已被禁用",
+            code=403
+        )
+
 
     if not verify_password(
         data.password,
@@ -276,3 +286,29 @@ def refresh_token_api(
             msg=str(e),
             code=401
         )
+
+
+
+# 禁用接口
+@router.put("/users/{user_id}/status")
+def update_user_status(
+    user_id: int,
+    status: int,
+    db: Session = Depends(get_db),
+    _current_user=Depends(admin_required) # 权限依赖 管理员能封禁
+):
+    result = update_user_status_service(
+        user_id,
+        status,
+        db
+    )
+
+    if not result:
+        return error_response(
+            msg="用户不存在",
+            code=404
+        )
+
+    return success_response(
+        msg="状态修改成功"
+    )
