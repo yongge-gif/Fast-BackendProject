@@ -35,6 +35,11 @@ class UpdateUserRequest(BaseModel):
     email: Optional[str] = None
 
 
+class RefreshTokenRequest(BaseModel):
+
+    refresh_token: str
+
+
 # 响应模型
 
 class MessageResponse(BaseModel):

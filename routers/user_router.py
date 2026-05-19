@@ -1,12 +1,13 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
+from jose.exceptions import ExpiredSignatureError  # JWT令牌过期异常
 from sqlalchemy.orm import Session
 from utils.auth import get_current_user
 from database import get_db
-from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest
+from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest, RefreshTokenRequest
 from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
                                    delete_user_service)
-from utils.jwt_util import create_token
+from utils.jwt_util import create_access_token, create_refresh_token, decode_token
 from utils.logger import logger
 from typing import Optional
 from utils.response import (success_response, error_response)
@@ -95,9 +96,15 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             )
         )
 
-    token = create_token({
-        "username": user.username,
-        "role": user.role  # 携带权限
+    # 返回双token
+    access_token = create_access_token({
+        "user_id": user.id,
+        "role": user.role
+    })
+
+    refresh_token = create_refresh_token({
+        "user_id": user.id,
+        "role": user.role
     })
 
     logger.info(f"用户 {data.username} 登录成功")
@@ -105,7 +112,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     return success_response(
         msg="登录成功",
         data={
-            "token": token
+            "access_token": access_token,
+            "refresh_token": refresh_token
         }
     )
 
@@ -226,3 +234,45 @@ def delete_user(
         "code": 200,
         "msg": "删除成功"
     }
+
+
+# 刷新接口
+@router.post("/refresh")
+def refresh_token_api(
+    data: RefreshTokenRequest
+):
+
+    try:
+
+        payload = decode_token(
+            data.refresh_token
+        )
+
+        new_access_token = create_access_token(
+            {
+                "user_id": payload["user_id"],
+                "role": payload["role"]
+            }
+        )
+
+        return success_response(
+            data={
+                "access_token": new_access_token
+            },
+            msg="刷新成功"
+        )
+
+    except ExpiredSignatureError:
+
+        return error_response(
+            msg="refresh_token已过期",
+            code=401
+        )
+
+    except Exception as e:
+        print(e)
+
+        return error_response(
+            msg=str(e),
+            code=401
+        )
