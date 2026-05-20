@@ -14,6 +14,7 @@ from utils.response import (success_response, error_response)
 from fastapi.responses import JSONResponse
 from dependencies.permission import admin_required
 from utils.password import verify_password
+from models.user_model import User
 
 router = APIRouter()
 
@@ -311,4 +312,30 @@ def update_user_status(
 
     return success_response(
         msg="状态修改成功"
+    )
+
+
+
+# 查询当前用户接口
+@router.get("/me")
+def get_current_user_info(
+    current_user=Depends(get_current_user),  # id来自jwt解析，无状态身份认证
+    db: Session = Depends(get_db)
+):
+
+    # 数据库查询完整信息
+    user = db.query(User).filter(
+        User.id == current_user["user_id"]
+    ).first()
+
+    return success_response(
+        data={
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "avatar_url": f"http://127.0.0.1:8000/uploads/{user.avatar}",
+            "role": user.role,
+            "status": user.status
+        },
+        msg="获取成功"
     )
