@@ -1,20 +1,23 @@
+import os
 import uuid
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
+from fastapi.responses import JSONResponse
 from jose.exceptions import ExpiredSignatureError  # JWT令牌过期异常
 from sqlalchemy.orm import Session
-from utils.auth import get_current_user
+
 from database import get_db
+from dependencies.permission import admin_required
+from models.user_model import User
 from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest, RefreshTokenRequest
 from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
                                    delete_user_service, update_user_status_service)
+from utils.auth import get_current_user
 from utils.jwt_util import create_access_token, create_refresh_token, decode_token
 from utils.logger import logger
-from typing import Optional
-from utils.response import (success_response, error_response)
-from fastapi.responses import JSONResponse
-from dependencies.permission import admin_required
 from utils.password import verify_password
-from models.user_model import User
+from utils.response import (success_response, error_response)
 
 router = APIRouter()
 
@@ -191,7 +194,55 @@ async def upload_file(file: UploadFile = File(...)):  # 上传文件对象
     }
 
 
-# 更新接口
+# 更新用户头像接口
+@router.put("/users/avatar")
+async def update_user_avatar(
+        avatar: UploadFile = File(...),
+        current_user=Depends(get_current_user),  # 通过 JWT 获取当前登录用户
+        db: Session = Depends(get_db)
+):
+
+    # 查询当前用户
+    user = db.query(User).filter(
+        User.id == current_user["user_id"]
+    ).first()
+
+    # 删除旧头像
+    if user.avatar:
+
+        old_file = f"uploads/{user.avatar}"
+
+        if os.path.exists(old_file):
+            os.remove(old_file)
+
+    # 保存新头像
+    suffix = avatar.filename.split(".")[-1]
+
+    filename = f"{uuid.uuid4()}.{suffix}"
+
+    file_path = f"uploads/{filename}"
+
+    with open(file_path, "wb") as f:
+
+        content = await avatar.read()
+
+        f.write(content)
+
+    # 更新
+    user.avatar = filename
+
+    db.commit()
+
+    # 返回
+    return success_response(
+        data={
+            "avatar_url": f"http://127.0.0.1:8000/uploads/{filename}"
+        },
+        msg="头像更新成功"
+    )
+
+
+# 用户名，邮箱更新接口
 @router.put("/users/{user_id}")
 def update_user(
         user_id: int,
@@ -339,3 +390,6 @@ def get_current_user_info(
         },
         msg="获取成功"
     )
+
+
+

@@ -156,17 +156,15 @@ def delete_user_service(
 
 
 def update_user_status_service(
-    user_id,
-    status,
-    db
+        user_id,
+        status,
+        db
 ):
-
     user = db.query(User).filter(
         User.id == user_id
     ).first()
 
     if not user:
-
         return False
 
     user.status = status
