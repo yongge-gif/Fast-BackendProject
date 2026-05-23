@@ -2,9 +2,10 @@ from jose import jwt, JWTError
 from fastapi import Header, HTTPException, Depends
 
 from config.settings import SECRET_KEY, ALGORITHM
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer  # 一个安全工具类，方便从请求中获取 Bearer Token
+from utils.token_blacklist import token_blacklist
 
-# 创建OAuth2
+# 创建OAuth2, 获取 Bearer Token 的依赖对象
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/login"
 )
@@ -19,6 +20,12 @@ def get_current_user(
         raise HTTPException(
             status_code=401,
             detail="未登录或未携带token"
+        )
+
+    if token in token_blacklist:
+        raise HTTPException(
+            status_code=401,
+            detail="token已失效"
         )
 
     try:

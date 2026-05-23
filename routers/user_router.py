@@ -14,11 +14,12 @@ from schemas.user_schema import (LoginRequest, MessageResponse, UserListResponse
                                  RefreshTokenRequest, ChangePasswordRequest)
 from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
                                    delete_user_service, update_user_status_service)
-from utils.auth import get_current_user
+from utils.auth import get_current_user, oauth2_scheme
 from utils.jwt_util import create_access_token, create_refresh_token, decode_token
 from utils.logger import logger
 from utils.password import verify_password, hash_password
 from utils.response import (success_response, error_response)
+from utils.token_blacklist import token_blacklist
 
 router = APIRouter()
 
@@ -284,7 +285,6 @@ def change_password(
     )
 
 
-
 # 用户名，邮箱更新接口
 @router.put("/users/{user_id}")
 def update_user(
@@ -430,4 +430,17 @@ def get_current_user_info(
             "status": user.status
         },
         msg="获取成功"
+    )
+
+
+# 退出登录接口
+@router.post("/logout")
+def logout(
+    token: str = Depends(oauth2_scheme)
+):
+    # token加入黑名单
+    token_blacklist.add(token)
+
+    return success_response(
+        msg="退出登录成功"
     )
