@@ -40,6 +40,14 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+# 密码修改请求
+class ChangePasswordRequest(BaseModel):
+
+    old_password: str  # 校验身份
+
+    new_password: str  # 新密码
+
+
 # 响应模型
 
 class MessageResponse(BaseModel):

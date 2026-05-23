@@ -10,13 +10,14 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencies.permission import admin_required
 from models.user_model import User
-from schemas.user_schema import LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest, RefreshTokenRequest
+from schemas.user_schema import (LoginRequest, MessageResponse, UserListResponse, UpdateUserRequest,
+                                 RefreshTokenRequest, ChangePasswordRequest)
 from services.user_service import (login_service, register_service, get_all_users_service, update_user_service,
                                    delete_user_service, update_user_status_service)
 from utils.auth import get_current_user
 from utils.jwt_util import create_access_token, create_refresh_token, decode_token
 from utils.logger import logger
-from utils.password import verify_password
+from utils.password import verify_password, hash_password
 from utils.response import (success_response, error_response)
 
 router = APIRouter()
@@ -242,6 +243,48 @@ async def update_user_avatar(
     )
 
 
+# 密码修改接口
+@router.put("/users/password")
+def change_password(
+    data: ChangePasswordRequest,
+    current_user=Depends(get_current_user),  # 通过 JWT 获取当前登录用户。
+    db: Session = Depends(get_db)
+):
+
+    # 查询当前用户
+    user = db.query(User).filter(
+        User.id == current_user["user_id"]
+    ).first()
+
+    # 校验旧密码
+    if not verify_password(
+            data.old_password,
+            user.password
+    ):
+        return error_response(
+            msg="旧密码错误",
+            code=400
+        )
+
+    # 更改新密码
+    user.password = hash_password(
+        data.new_password
+    )
+
+    # 新旧密码相同校验
+    if data.old_password == data.new_password:
+        return error_response(
+            msg="新密码不能与旧密码相同"
+        )
+
+    db.commit()
+
+    return success_response(
+        msg="密码修改成功"
+    )
+
+
+
 # 用户名，邮箱更新接口
 @router.put("/users/{user_id}")
 def update_user(
@@ -298,7 +341,7 @@ def delete_user(
     }
 
 
-# 刷新接口
+# token刷新接口
 @router.post("/refresh")
 def refresh_token_api(
     data: RefreshTokenRequest
@@ -340,7 +383,6 @@ def refresh_token_api(
         )
 
 
-
 # 禁用接口
 @router.put("/users/{user_id}/status")
 def update_user_status(
@@ -366,7 +408,6 @@ def update_user_status(
     )
 
 
-
 # 查询当前用户接口
 @router.get("/me")
 def get_current_user_info(
@@ -390,6 +431,3 @@ def get_current_user_info(
         },
         msg="获取成功"
     )
-
-
-
