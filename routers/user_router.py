@@ -1,5 +1,7 @@
 import os
 import uuid
+import json
+
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
@@ -20,6 +22,7 @@ from utils.logger import logger
 from utils.password import verify_password, hash_password
 from utils.response import (success_response, error_response)
 from utils.token_blacklist import token_blacklist
+from utils.redis_client import redis_client
 
 router = APIRouter()
 
@@ -389,7 +392,7 @@ def update_user_status(
     user_id: int,
     status: int,
     db: Session = Depends(get_db),
-    _current_user=Depends(admin_required) # 权限依赖 管理员能封禁
+    _current_user=Depends(admin_required)  # 权限依赖 管理员能封禁
 ):
     result = update_user_status_service(
         user_id,
@@ -414,21 +417,40 @@ def get_current_user_info(
     current_user=Depends(get_current_user),  # id来自jwt解析，无状态身份认证
     db: Session = Depends(get_db)
 ):
+    # 先检查缓存
+    cache_user = redis_client.get(
+        f"user:{current_user['user_id']}"
+    )
+    # 如果缓存存在
+    if cache_user:
+        return success_response(
+            data=json.loads(cache_user),
+            msg="获取成功（Redis缓存）"
+        )
 
     # 数据库查询完整信息
     user = db.query(User).filter(
         User.id == current_user["user_id"]
     ).first()
 
-    return success_response(
-        data={
+    user_data = {
             "id": user.id,
             "username": user.username,
             "email": user.email,
             "avatar_url": f"http://127.0.0.1:8000/uploads/{user.avatar}",
             "role": user.role,
             "status": user.status
-        },
+        }
+
+    # 写入Redis缓存
+    redis_client.setex(  # 设置缓存 + 过期时间
+        f"user:{user.id}",
+        300,
+        json.dumps(user_data)  # dict → JSON字符串
+    )
+
+    return success_response(
+        data=user_data,
         msg="获取成功"
     )
 
