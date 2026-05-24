@@ -238,6 +238,11 @@ async def update_user_avatar(
 
     db.commit()
 
+    # 删除旧缓存
+    redis_client.delete(
+        f"user:{user.id}"
+    )
+
     # 返回
     return success_response(
         data={

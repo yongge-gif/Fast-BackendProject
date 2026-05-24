@@ -1,5 +1,6 @@
 from models.user_model import User
 from utils.password import hash_password
+from utils.redis_client import redis_client
 
 
 def login_service(data, db):
@@ -130,6 +131,11 @@ def update_user_service(user_id, data, db):
 
     db.commit()
 
+    # 删除旧缓存
+    redis_client.delete(
+        f"user:{user.id}"
+    )
+
     return True
 
 
@@ -150,7 +156,10 @@ def delete_user_service(
 
     db.commit()
 
-    db.commit()
+    # 删除就缓存
+    redis_client.delete(
+        f"user:{user.id}"
+    )
 
     return True
 
