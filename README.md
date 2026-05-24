@@ -82,9 +82,9 @@ fastapi_project
 创建 `.env` 文件：
 
 ```env
-DATABASE_URL=mysql+pymysql://root:password@127.0.0.1:3306/fastapi_db
+DATABASE_URL=mysql+pymysql://root:123456@127.0.0.1:3306/fastapi_db
 
-SECRET_KEY=your_secret_key
+SECRET_KEY=123456
 
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
