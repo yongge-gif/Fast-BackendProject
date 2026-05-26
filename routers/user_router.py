@@ -23,6 +23,7 @@ from utils.password import verify_password, hash_password
 from utils.response import (success_response, error_response)
 from utils.token_blacklist import token_blacklist
 from utils.redis_client import redis_client
+from utils.rate_limit import rate_limit
 
 router = APIRouter()
 
@@ -75,7 +76,11 @@ async def register(
 
 
 @router.post("/login")  # 登录接口
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+def login(
+        data: LoginRequest,
+        db: Session = Depends(get_db),
+        _: None = Depends(rate_limit(5, 60))  # 添加限流依赖
+):
     logger.info("用户开始登录")
 
     user = login_service(data, db)
