@@ -24,6 +24,7 @@ from utils.response import (success_response, error_response)
 from utils.token_blacklist import token_blacklist
 from utils.redis_client import redis_client
 from utils.rate_limit import rate_limit
+from utils.code_util import generate_code
 
 from tasks.email_task import send_email
 
@@ -482,12 +483,61 @@ def logout(
     )
 
 
-# 调用异步任务接口
-@router.post("/send-email")
-def send_email_api(email: str):
+# 测试异步任务接口
+# @router.post("/send-email")
+# def send_email_api(email: str):
+#
+#     send_email.delay(email)  # 丢进任务队列
+#
+#     return success_response(
+#         msg="邮件发送任务已提交"
+#     )
 
-    send_email.delay(email)  # 丢进任务队列
+
+# 验证码发送接口
+@router.post("/send-code")
+def send_code(email: str):
+
+    # 生成验证码
+    code = generate_code()
+
+    # redis缓存验证码
+    redis_client.setex(
+        f"email_code:{email}",
+        300,  # 有效时间5分钟
+        code
+    )
+
+    # Celery异步发送邮件
+    send_email.delay(
+        email,
+        code
+    )
 
     return success_response(
-        msg="邮件发送任务已提交"
+        msg="验证码发送成功"
+    )
+
+
+# 验证码校验接口
+@router.post("/verify-code")
+def verify_code(
+    email: str,
+    code: str
+):
+
+    # redis读取验证码
+    redis_code = redis_client.get(
+        f"email_code:{email}"
+    )
+
+    # 校验
+    if redis_code != code:
+        return error_response(
+            msg="验证码错误",
+            code=400
+        )
+
+    return success_response(
+        msg="验证码正确"
     )

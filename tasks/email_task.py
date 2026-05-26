@@ -2,11 +2,11 @@ from celery_app import celery
 import time
 
 
-# 创建任务
+# 创建异步邮件任务
 @celery.task
-def send_email(email: str):
+def send_email(email: str, code: str):
 
-    print(f"开始发送邮件: {email}")
+    print(f"向邮箱 {email} 发送验证码 {code}")
 
     time.sleep(5)  # 模拟耗时任务。
 
