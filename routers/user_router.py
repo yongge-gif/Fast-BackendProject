@@ -25,6 +25,10 @@ from utils.token_blacklist import token_blacklist
 from utils.redis_client import redis_client
 from utils.rate_limit import rate_limit
 
+from tasks.email_task import send_email
+
+
+
 router = APIRouter()
 
 
@@ -475,4 +479,15 @@ def logout(
 
     return success_response(
         msg="退出登录成功"
+    )
+
+
+# 调用异步任务接口
+@router.post("/send-email")
+def send_email_api(email: str):
+
+    send_email.delay(email)  # 丢进任务队列
+
+    return success_response(
+        msg="邮件发送任务已提交"
     )
