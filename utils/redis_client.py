@@ -1,9 +1,10 @@
 import redis
+from core.config import settings
 
 redis_client = redis.Redis(
-    host="127.0.0.1",
-    port=6379,
-    db=0,
+    host=settings.REDIS_HOST,
+    port=settings.REDIS_PORT,
+    db=0,  # 使用 Redis 的 0 号数据库
     decode_responses=True  # 让 Redis 返回字符串。
 )
 

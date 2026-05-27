@@ -1,6 +1,6 @@
 from jose import jwt
 from datetime import datetime, timedelta
-from config.settings import SECRET_KEY, ALGORITHM
+from core.config import settings
 
 
 # def create_token(data: dict):
@@ -37,8 +37,8 @@ def create_access_token(data: dict):
 
     return jwt.encode(
         to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
     )
 
 
@@ -57,8 +57,8 @@ def create_refresh_token(data: dict):
 
     return jwt.encode(
         to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
     )
 
 
@@ -67,6 +67,6 @@ def decode_token(token: str):
 
     return jwt.decode(
         token,
-        SECRET_KEY,
-        algorithms=[ALGORITHM]
+        settings.SECRET_KEY,
+        algorithms=settings.ALGORITHM
     )
